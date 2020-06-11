@@ -133,17 +133,22 @@ class PokemonReader{
 
     setName(address, name){
         var limit = Math.min(name.length,10);
-        console.log(limit)
+        
         for(var i = 0; i < limit; i++ ){
             var letter = name[i];
             var letterAsByte = lexicon.getByteValue(letter);
             console.log(letterAsByte)
-            // var b = memoryjs.writeMemory(processObject.handle, letterAsByte, address + i, memoryjs.BYTE);
+            var newVal = parseInt(letterAsByte,16);
+            var b = memoryjs.readMemory(processObject.handle, address + i, memoryjs.BYTE);
+            console.log("current memory", b)
+            memoryjs.writeMemory(processObject.handle, address + i, newVal, memoryjs.BYTE);
+            var b2 = memoryjs.readMemory(processObject.handle, address + i, memoryjs.BYTE);
+            console.log("new memory", b2)
             // var hex = b.toString(16).toUpperCase();
             // if(hex == "FF")break;
             // nameArray.push(lexicon.convertLetter( hex ));
         }
-        // return nameArray.toString().replace(/,/g, '');
+        memoryjs.writeMemory(processObject.handle, address + i, 0xff, memoryjs.BYTE);
     }
 
     getNameHex(address){
@@ -301,65 +306,65 @@ class PokemonReader{
 
         var checkSum = mem.get2Byte(baseAddress+0x1C, 2);
    
-        // console.log("Personality:", personalityValue);
-        // console.log("OTid:", originalTrainerId);
+        console.log("Personality:", personalityValue);
+        console.log("OTid:", originalTrainerId);
         console.log("Namehex", nameHex);
         console.log("Name:", name);
-        // console.log("Language array", languagea);
-        // console.log("TrainerName:", trainerName);
-        // console.log("checksum", checkSum);
+        console.log("Language array", languagea);
+        console.log("TrainerName:", trainerName);
+        console.log("checksum", checkSum);
 
-        // console.log("Personality:", personalityValue);
-        // console.log("OTid:", originalTrainerId);
+        console.log("Personality:", personalityValue);
+        console.log("OTid:", originalTrainerId);
 
-        // var orderVal = personalityValue%0x18;
-        // console.log("ORDER VAL",orderVal.toString(16),orderVal, personalityValue , "%", 0x18)
-        // var order = this.getOrder( orderVal );
-        // console.log("!!!!!!!!!!!!!",this.getOrder(0xFF47E89D % 0x18));//CADB test
-        // console.log("sub order", order); //12 DABC
+        var orderVal = personalityValue%0x18;
+        console.log("ORDER VAL",orderVal.toString(16),orderVal, personalityValue , "%", 0x18)
+        var order = this.getOrder( orderVal );
+        console.log("!!!!!!!!!!!!!",this.getOrder(0xFF47E89D % 0x18));//CADB test
+        console.log("sub order", order); //12 DABC
         
 
 
-        // var pokemonId = this.getId(baseAddress);
-        // var trainerId = this.getId(baseAddress + 0x4);
+        var pokemonId = this.getId(baseAddress);
+        var trainerId = this.getId(baseAddress + 0x4);
 
-        // var key = mem.xorHex(trainerId,pokemonId);
+        var key = mem.xorHex(trainerId,pokemonId);
 
-        // // 12 DABC
-        // var pokemonStatsAddress = baseAddress+32;//+0x20;
-        // var total = 0x0;
-        // var originalData = [];
-        // for(var i=0; i < 12; i ++){
-        //     var row = mem.getArrayHex(pokemonStatsAddress+0x4*i, 4);
-        //     originalData.push(row);
-        //     var reversedData = row.reverse();
-        //     var encrytedData = reversedData.join().replace(/,/g, '');
-        //     var decryptedData = mem.xorHex(encrytedData,key);
-        //     // console.log(decryptedData)
-        //     total=mem.addHex(total, decryptedData.substr(0,4));
-        //     total=mem.addHex(total, decryptedData.substr(4,4));
-        // }
-        // console.log("total",total, "should contain", checkSum);
+        // 12 DABC
+        var pokemonStatsAddress = baseAddress+32;//+0x20;
+        var total = 0x0;
+        var originalData = [];
+        for(var i=0; i < 12; i ++){
+            var row = mem.getArrayHex(pokemonStatsAddress+0x4*i, 4);
+            originalData.push(row);
+            var reversedData = row.reverse();
+            var encrytedData = reversedData.join().replace(/,/g, '');
+            var decryptedData = mem.xorHex(encrytedData,key);
+            // console.log(decryptedData)
+            total=mem.addHex(total, decryptedData.substr(0,4));
+            total=mem.addHex(total, decryptedData.substr(4,4));
+        }
+        console.log("total",total, "should contain", checkSum);
 
-        // var offset = 32;
-        // [...order].forEach(letter => {
-        //     if(letter == "A"){
-        //         this.decodeA(baseAddress,offset,key)
-        //     }
-        //     else if(letter == "B"){
-        //         this.decodeB(baseAddress,offset,key)
-        //     }
-        //     else if(letter == "C"){
-        //         this.decodeC(baseAddress,offset,key)
-        //     }
-        //     else if(letter == "D"){
-        //         this.decodeD(baseAddress,offset,key)
-        //     }
-        //     offset += 12;
-        // });
+        var offset = 32;
+        [...order].forEach(letter => {
+            if(letter == "A"){
+                this.decodeA(baseAddress,offset,key)
+            }
+            else if(letter == "B"){
+                this.decodeB(baseAddress,offset,key)
+            }
+            else if(letter == "C"){
+                this.decodeC(baseAddress,offset,key)
+            }
+            else if(letter == "D"){
+                this.decodeD(baseAddress,offset,key)
+            }
+            offset += 12;
+        });
 
 
-        // console.log(originalData);
+        console.log(originalData);
 
 
        
@@ -369,14 +374,27 @@ class PokemonReader{
 
     changeSnorlaxInSlot2(addressOfFirstPokemon)
     {   
-        console.log("hi")
         var addressOfThirdPokemon = addressOfFirstPokemon + 100;
         var baseAddress = addressOfThirdPokemon;
+
+        var name = this.getName(baseAddress + 0x8);
+        var nameHex = this.getNameHex(baseAddress + 0x8);
+
+        console.log("Namehex", nameHex);
+        console.log("Name:", name);
+
+
         var personalityValue = 0;
         //memoryjs.writeMemory(processObject.handle, baseAddress,personalityValue,memoryjs.DWORD);
         var originalTrainerId = mem.get2ByteString(baseAddress + 0x4);
         
-        this.setName(baseAddress + 0x8, "Snorlax")
+       this.setName(baseAddress + 0x8, "Poopy")
+
+       var name = this.getName(baseAddress + 0x8);
+        var nameHex = this.getNameHex(baseAddress + 0x8);
+
+        console.log("Namehex", nameHex);
+        console.log("Name:", name);
 
         // var name = this.getName(baseAddress + 0x8);
         // var nameHex = this.getNameHex(baseAddress + 0x8);

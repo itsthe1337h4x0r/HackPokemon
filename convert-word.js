@@ -84,7 +84,7 @@
 
     var reverseMap = {};
     Object.entries(map).map((key) => {reverseMap[key[1]] = key[0]});
-    console.log(reverseMap)
+    // console.log(reverseMap)
 
 class ConvertWord{
 
