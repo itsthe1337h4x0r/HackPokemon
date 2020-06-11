@@ -18,8 +18,9 @@ const address =  offset;
 class MemoryReader{
 
     hex(dec){
-        if(dec < 10) return "0" + dec.toString(16)
-        return dec.toString(16);
+        var hex = dec.toString(16).toUpperCase();
+        if(hex.length < 2) return "0" + hex;
+        return hex;
     }
 
     get2Byte(address){
@@ -77,30 +78,30 @@ class MemoryReader{
 }
 
 var order = {
-    '00' : 'ABCD',
-    '01' : 'ABDC',
-    '02' : 'ACBD',
-    '03' : 'ACDB',
-    '04' : 'ADBC',
-    '05' : 'ADCB',
-    '06' : 'BACD',
-    '07' : 'BADC',
-    '08' : 'BCAD',
-    '09' : 'BCDA',
-    '0A' : 'BDAC',
-    '0B' : 'BDCA',
-    '0C' : 'CABD',
-    '0D' : 'CADB',
-    '0E' : 'CBAD',
-    '0F' : 'CBDA',
-    '10' : 'CDAB',
-    '11' : 'CDBA',
-    '12' : 'DABC',
-    '13' : 'DACB',
-    '14' : 'DBAC',
-    '15' : 'DBCA',
-    '16' : 'DCAB',
-    '17' : 'DCBA'
+    0x0 : 'ABCD',
+    0x1 : 'ABDC',
+    0x2 : 'ACBD',
+    0x3 : 'ACDB',
+    0x4 : 'ADBC',
+    0x5 : 'ADCB',
+    0x6 : 'BACD',
+    0x7 : 'BADC',
+    0x8 : 'BCAD',
+    0x9 : 'BCDA',
+    0xA : 'BDAC',
+    0xB : 'BDCA',
+    0xC : 'CABD',
+    0xD : 'CADB',
+    0xE : 'CBAD',
+    0xF : 'CBDA',
+    0x10 : 'CDAB',
+    0x11 : 'CDBA',
+    0x12 : 'DABC',
+    0x13 : 'DACB',
+    0x14 : 'DBAC',
+    0x15 : 'DBCA',
+    0x16 : 'DCAB',
+    0x17 : 'DCBA'
 };
 
 var mem = new MemoryReader();
@@ -128,6 +129,33 @@ class PokemonReader{
             nameArray.push(lexicon.convertLetter( hex ));
         }
         return nameArray.toString().replace(/,/g, '');
+    }
+
+    setName(address, name){
+        var limit = Math.min(name.length,10);
+        console.log(limit)
+        for(var i = 0; i < limit; i++ ){
+            var letter = name[i];
+            var letterAsByte = lexicon.getByteValue(letter);
+            console.log(letterAsByte)
+            // var b = memoryjs.writeMemory(processObject.handle, letterAsByte, address + i, memoryjs.BYTE);
+            // var hex = b.toString(16).toUpperCase();
+            // if(hex == "FF")break;
+            // nameArray.push(lexicon.convertLetter( hex ));
+        }
+        // return nameArray.toString().replace(/,/g, '');
+    }
+
+    getNameHex(address){
+        var nameArray = [];
+        for(var i = address; i < address + 10; i++ ){
+            //console.log("a:",i)
+            var b = memoryjs.readMemory(processObject.handle, i, memoryjs.BYTE);
+            var hex = b.toString(16).toUpperCase();
+            if(hex == "FF")break;
+            nameArray.push( hex );
+        }
+        return nameArray.toString().replace(/,/g, ' ');
     }
 
     decryptedRow(address,key){
@@ -259,68 +287,163 @@ class PokemonReader{
         console.log(obedient);
     }
 
+    writePokemon(baseAddress, pokemon){
+        
+    }
+
     readPokemon(baseAddress){        
         var personalityValue = memoryjs.readMemory(processObject.handle, baseAddress, memoryjs.DWORD);
         var originalTrainerId = mem.get2ByteString(baseAddress + 0x4);
         var name = this.getName(baseAddress + 0x8);
+        var nameHex = this.getNameHex(baseAddress + 0x8);
         var languagea = mem.get2Byte(baseAddress + 0x12);
         var trainerName = this.getName(baseAddress+0x14)
 
         var checkSum = mem.get2Byte(baseAddress+0x1C, 2);
    
-        console.log("Personality:", personalityValue);
-        console.log("OTid:", originalTrainerId);
+        // console.log("Personality:", personalityValue);
+        // console.log("OTid:", originalTrainerId);
+        console.log("Namehex", nameHex);
         console.log("Name:", name);
-        console.log("Language array", languagea);
-        console.log("TrainerName:", trainerName);
-        console.log("checksum", checkSum);
+        // console.log("Language array", languagea);
+        // console.log("TrainerName:", trainerName);
+        // console.log("checksum", checkSum);
 
-        console.log("Personality:", personalityValue);
-        console.log("OTid:", originalTrainerId);
+        // console.log("Personality:", personalityValue);
+        // console.log("OTid:", originalTrainerId);
 
-        var order = this.getOrder(personalityValue%0x18);
-        console.log("sub order", order); //12 DABC
+        // var orderVal = personalityValue%0x18;
+        // console.log("ORDER VAL",orderVal.toString(16),orderVal, personalityValue , "%", 0x18)
+        // var order = this.getOrder( orderVal );
+        // console.log("!!!!!!!!!!!!!",this.getOrder(0xFF47E89D % 0x18));//CADB test
+        // console.log("sub order", order); //12 DABC
         
 
 
-        var pokemonId = this.getId(baseAddress);
-        var trainerId = this.getId(baseAddress + 0x4);
+        // var pokemonId = this.getId(baseAddress);
+        // var trainerId = this.getId(baseAddress + 0x4);
 
-        var key = mem.xorHex(trainerId,pokemonId);
+        // var key = mem.xorHex(trainerId,pokemonId);
 
-        // 12 DABC
-        var pokemonStatsAddress = baseAddress+32;//+0x20;
-        var total = 0x0;
-        for(var i=0; i < 12; i ++){
-            var row = mem.getArrayHex(pokemonStatsAddress+0x4*i, 4);
-            var reversedData = row.reverse();
-            var encrytedData = reversedData.join().replace(/,/g, '');
-            var decryptedData = mem.xorHex(encrytedData,key);
-            // console.log(decryptedData)
-            total=mem.addHex(total, decryptedData.substr(0,4));
-            total=mem.addHex(total, decryptedData.substr(4,4));
-        }
-        console.log("total",total, "should contain", checkSum);
+        // // 12 DABC
+        // var pokemonStatsAddress = baseAddress+32;//+0x20;
+        // var total = 0x0;
+        // var originalData = [];
+        // for(var i=0; i < 12; i ++){
+        //     var row = mem.getArrayHex(pokemonStatsAddress+0x4*i, 4);
+        //     originalData.push(row);
+        //     var reversedData = row.reverse();
+        //     var encrytedData = reversedData.join().replace(/,/g, '');
+        //     var decryptedData = mem.xorHex(encrytedData,key);
+        //     // console.log(decryptedData)
+        //     total=mem.addHex(total, decryptedData.substr(0,4));
+        //     total=mem.addHex(total, decryptedData.substr(4,4));
+        // }
+        // console.log("total",total, "should contain", checkSum);
 
-        var offset = 32;
-        [...order].forEach(letter => {
-            if(letter == "A"){
-                this.decodeA(baseAddress,offset,key)
-            }
-            else if(letter == "B"){
-                this.decodeB(baseAddress,offset,key)
-            }
-            else if(letter == "C"){
-                this.decodeC(baseAddress,offset,key)
-            }
-            else if(letter == "D"){
-                this.decodeD(baseAddress,offset,key)
-            }
-            offset += 12;
-        });
+        // var offset = 32;
+        // [...order].forEach(letter => {
+        //     if(letter == "A"){
+        //         this.decodeA(baseAddress,offset,key)
+        //     }
+        //     else if(letter == "B"){
+        //         this.decodeB(baseAddress,offset,key)
+        //     }
+        //     else if(letter == "C"){
+        //         this.decodeC(baseAddress,offset,key)
+        //     }
+        //     else if(letter == "D"){
+        //         this.decodeD(baseAddress,offset,key)
+        //     }
+        //     offset += 12;
+        // });
 
 
+        // console.log(originalData);
 
+
+       
+
+
+    }
+
+    changeSnorlaxInSlot2(addressOfFirstPokemon)
+    {   
+        console.log("hi")
+        var addressOfThirdPokemon = addressOfFirstPokemon + 100;
+        var baseAddress = addressOfThirdPokemon;
+        var personalityValue = 0;
+        //memoryjs.writeMemory(processObject.handle, baseAddress,personalityValue,memoryjs.DWORD);
+        var originalTrainerId = mem.get2ByteString(baseAddress + 0x4);
+        
+        this.setName(baseAddress + 0x8, "Snorlax")
+
+        // var name = this.getName(baseAddress + 0x8);
+        // var nameHex = this.getNameHex(baseAddress + 0x8);
+        // var languagea = mem.get2Byte(baseAddress + 0x12);
+        // var trainerName = this.getName(baseAddress+0x14)
+
+        // var checkSum = mem.get2Byte(baseAddress+0x1C, 2);
+   
+        // // console.log("Personality:", personalityValue);
+        // // console.log("OTid:", originalTrainerId);
+        // console.log("Namehex", nameHex);
+        // console.log("Name:", name);
+        // console.log("Language array", languagea);
+        // console.log("TrainerName:", trainerName);
+        // console.log("checksum", checkSum);
+
+        // console.log("Personality:", personalityValue);
+        // console.log("OTid:", originalTrainerId);
+
+        // var orderVal = personalityValue%0x18;
+        // console.log("ORDER VAL",orderVal.toString(16),orderVal, personalityValue , "%", 0x18)
+        // var order = this.getOrder( orderVal );
+        // console.log("!!!!!!!!!!!!!",this.getOrder(0xFF47E89D % 0x18));//CADB test
+        // console.log("sub order", order); //12 DABC
+        
+
+
+        // var pokemonId = this.getId(baseAddress);
+        // var trainerId = this.getId(baseAddress + 0x4);
+
+        // var key = mem.xorHex(trainerId,pokemonId);
+
+        // // 12 DABC
+        // var pokemonStatsAddress = baseAddress+32;//+0x20;
+        // var total = 0x0;
+        // var originalData = [];
+        // for(var i=0; i < 12; i ++){
+        //     var row = mem.getArrayHex(pokemonStatsAddress+0x4*i, 4);
+        //     originalData.push(row);
+        //     var reversedData = row.reverse();
+        //     var encrytedData = reversedData.join().replace(/,/g, '');
+        //     var decryptedData = mem.xorHex(encrytedData,key);
+        //     // console.log(decryptedData)
+        //     total=mem.addHex(total, decryptedData.substr(0,4));
+        //     total=mem.addHex(total, decryptedData.substr(4,4));
+        // }
+        // console.log("total",total, "should contain", checkSum);
+
+        // var offset = 32;
+        // [...order].forEach(letter => {
+        //     if(letter == "A"){
+        //         this.decodeA(baseAddress,offset,key)
+        //     }
+        //     else if(letter == "B"){
+        //         this.decodeB(baseAddress,offset,key)
+        //     }
+        //     else if(letter == "C"){
+        //         this.decodeC(baseAddress,offset,key)
+        //     }
+        //     else if(letter == "D"){
+        //         this.decodeD(baseAddress,offset,key)
+        //     }
+        //     offset += 12;
+        // });
+
+
+        // console.log(originalData);
 
 
        
@@ -333,7 +456,7 @@ class PokemonReader{
 var pokeReader = new PokemonReader();
 //pokeReader.readPokemon(0x030C4250);
 
-console.log("________________________")
+// console.log("________________________")
 // pokeReader.readPokemon(0x030C43E0);
 //pokeReader.readPokemon(0x030C42B4);
 
@@ -341,27 +464,43 @@ console.log("________________________")
 
 var candyAddressOffset = 0x32F9F0;
 var candyBaseAddress = candyAddressOffset+processObject.modBaseAddr;//0x72F9F0; //not sure where this came from, it is the base in the pointer thing in cheat engine
-console.log(candyBaseAddress.toString(16))
+// console.log(candyBaseAddress.toString(16))
 var startAddress = memoryjs.readMemory(processObject.handle, candyBaseAddress, memoryjs.DWORD);
 
 var rareCandyOffset = 0x25C9A;
 var rareCandyAmount = memoryjs.readMemory(processObject.handle, startAddress + rareCandyOffset, memoryjs.BYTE);
 
-console.log("Rare candy ammount:", rareCandyAmount);
+// console.log("Rare candy ammount:", rareCandyAmount, "should be 98");
 
 
 var slot1Offset = 0x32F9F8;
 var slot1BaseAddress = slot1Offset + processObject.modBaseAddr;
-console.log(slot1BaseAddress);
-console.log(slot1BaseAddress.toString(16));
+// console.log(slot1BaseAddress);
+// console.log(slot1BaseAddress.toString(16));
 var pokemonStartAddress = memoryjs.readMemory(processObject.handle, slot1BaseAddress, memoryjs.DWORD);
 
 
 var offset2 = 0x4360;
 var pokemonFirstValue = memoryjs.readMemory(processObject.handle, pokemonStartAddress + offset2, memoryjs.BYTE);
 
-console.log(pokemonFirstValue);
+// console.log(pokemonFirstValue);
 //428e3b
 //28E50
+// console.log((pokemonStartAddress + offset2 + 100).toString(16))
+// pokeReader.readPokemon( 0x030F821C);
 
 pokeReader.readPokemon( pokemonStartAddress + offset2);
+pokeReader.changeSnorlaxInSlot2(pokemonStartAddress + offset2);
+// console.log("\n\n\n")
+// pokeReader.readPokemon( pokemonStartAddress + offset2 + 100);
+// pokeReader.readPokemon( pokemonStartAddress + offset2 + 200);
+// pokeReader.readPokemon( pokemonStartAddress + offset2 + 300);
+// pokeReader.readPokemon( pokemonStartAddress + offset2 + 400);
+
+
+// var encodedStrings = "00 00 FF 05 00 00 C8 E3 00 E7 E4 D9 D7 DD D5 E0 00 D5 D6 DD E0 DD E8 ED AD FF C2 D9 E0 E4 E7 00 E6 D9 E4 D9 E0 00 EB DD E0 D8 00 CA C9 C5 1B C7 C9 C8 AD FF CD E9 E1 E1 E3 E2 E7 00 E6 D5 DD E2 00 DD E2 00 D6 D5 E8 E8 E0 D9 AD FF C1 E6 D5 D8 E9 D5 E0";
+// var encodedArray = encodedStrings.split(' ');
+
+// var decodedString = encodedArray.map(byte => byte + " " + lexicon.convertLetter( byte ));
+
+// console.log(decodedString);

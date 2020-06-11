@@ -1,5 +1,6 @@
 
-  var  map = {'00':' ',
+  var  map = {
+    '00':' ',
     '1B': 'é',
     'BB': 'A',
     'BC': 'B',
@@ -81,12 +82,20 @@
     'BA': '/'
     };
 
-class ConvertWord{
+    var reverseMap = {};
+    Object.entries(map).map((key) => {reverseMap[key[1]] = key[0]});
+    console.log(reverseMap)
 
+class ConvertWord{
 
     convertLetter(hex){
         return map[hex];
     }
+
+    getByteValue(letter){
+        return reverseMap[letter];
+    }
+
 }
 
 module.exports = ConvertWord
